@@ -1,12 +1,11 @@
-import { Schema, model, Document, Model } from "mongoose";
-import { IFile, IProject } from "./settingInterface";
+import { Schema, model, Document, models } from "mongoose";
+import { IFile, IProject, IVisit } from "./settingInterface";
 
-// Project Schema
 const projectSchema = new Schema<IProject & Document>(
     {
         title: { type: String, required: true },
         liveLink: { type: String, required: true },
-        githubLink: { type: String, required: true },
+        githubLink: { type: String, required: false },
         description: { type: String },
         technology: { type: [String], default: [] },
         image: {
@@ -21,15 +20,16 @@ const projectSchema = new Schema<IProject & Document>(
     }
 );
 
-// File Schema (CV বা অন্য ফাইলের জন্য)
+
 const fileSchema = new Schema<IFile & Document>(
     {
         originalName: { type: String, required: true },
         secureUrl: { type: String, required: true },
         publicId: { type: String, required: true },
+        downloadCount: { type: Number, default: 0 },
         resourceType: {
             type: String,
-            enum: ["image", "raw"], // 'raw' হলো PDF, Docx ইত্যাদির জন্য
+            enum: ["image", "raw"],
             required: true
         },
     },
@@ -38,6 +38,12 @@ const fileSchema = new Schema<IFile & Document>(
     }
 );
 
-// Mongoose Models
+const visitSchema = new Schema<IVisit>({
+    name: { type: String, required: true, unique: true },
+    count: { type: Number, default: 0 },
+}, { timestamps: true });
+
+
 export const ProjectModel = model<IProject & Document>("Project", projectSchema);
 export const FileModel = model<IFile & Document>("File", fileSchema);
+export const VisitModel = models.VisitModel || model<IVisit>("VisitModel", visitSchema);

@@ -75,69 +75,148 @@ const deleteFile = async (req: Request, res: Response) => {
     });
 };
 
+
+const visitTracker = async (req: Request, res: Response) => {
+    const result = await settingsService.trackVisit(req.params.name as string);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Visit tracked",
+        data: result,
+    });
+};
 // Force download — redirect follow করে raw file stream করে
-const downloadFile = (req: Request, res: Response) => {
-    settingsService
-        .getFile(req.params.id as any)
-        .then((file) => {
-            if (!file) {
-                return res
-                    .status(404)
-                    .json({ success: false, message: "File not found" });
-            }
+// const downloadFile = async (req: Request, res: Response) => {
+//     const fileId = req.params.id as any;
+//     await settingsService.incrementDownloadCount(fileId).catch(err => console.log(err));
+//     await settingsService
+//         .getFile(req.params.id as any)
+//         .then((file) => {
+//             if (!file) {
+//                 return res
+//                     .status(404)
+//                     .json({ success: false, message: "File not found" });
+//             }
 
-            res.setHeader(
-                "Content-Disposition",
-                `attachment; filename="${encodeURIComponent(file.originalName)}"`
-            );
-            res.setHeader("Content-Type", "application/octet-stream");
+//             res.setHeader(
+//                 "Content-Disposition",
+//                 `attachment; filename="${encodeURIComponent(file.originalName)}"`
+//             );
+//             res.setHeader("Content-Type", "application/octet-stream");
 
-            // https.get redirect follow করে না, তাই manually handle করি
-            const makeRequest = (url: string) => {
-                https
-                    .get(url, (stream) => {
-                        // Cloudinary redirect দিলে নতুন URL follow করি
-                        if (
-                            stream.statusCode &&
-                            stream.statusCode >= 300 &&
-                            stream.statusCode < 400 &&
-                            stream.headers.location
-                        ) {
-                            return makeRequest(stream.headers.location);
-                        }
+//             // https.get redirect follow করে না, তাই manually handle করি
+//             const makeRequest = (url: string) => {
+//                 https
+//                     .get(url, (stream) => {
+//                         // Cloudinary redirect দিলে নতুন URL follow করি
+//                         if (
+//                             stream.statusCode &&
+//                             stream.statusCode >= 300 &&
+//                             stream.statusCode < 400 &&
+//                             stream.headers.location
+//                         ) {
+//                             return makeRequest(stream.headers.location);
+//                         }
 
-                        if (stream.statusCode !== 200) {
-                            return res.status(500).json({
-                                success: false,
-                                message: "Download failed",
-                            });
-                        }
+//                         if (stream.statusCode !== 200) {
+//                             return res.status(500).json({
+//                                 success: false,
+//                                 message: "Download failed",
+//                             });
+//                         }
 
-                        stream.pipe(res);
-                    })
-                    .on("error", (error) => {
-                        console.error("Download Error:", error.message);
-                        return res
-                            .status(500)
-                            .json({ success: false, message: "Download failed" });
-                    });
-            };
+//                         stream.pipe(res);
+//                     })
+//                     .on("error", (error) => {
+//                         console.error("Download Error:", error.message);
+//                         return res
+//                             .status(500)
+//                             .json({ success: false, message: "Download failed" });
+//                     });
+//             };
 
-            makeRequest(file.secureUrl);
-        })
-        .catch((error) => {
-            console.error("Download Error:", error?.message);
+//             makeRequest(file.secureUrl);
+//         })
+//         .catch((error) => {
+//             console.error("Download Error:", error?.message);
+//             return res
+//                 .status(500)
+//                 .json({ success: false, message: "Download failed" });
+//         });
+// };
+const downloadFile = async (req: Request, res: Response) => {
+    try {
+        const fileId = req.params.id as any;
+
+        // কাউন্ট আপডেট
+        await settingsService.incrementDownloadCount(fileId).catch(err => console.log(err));
+
+        // ফাইল ফেচ করা
+        const file = await settingsService.getFile(req.params.id as any);
+
+        if (!file) {
             return res
-                .status(500)
-                .json({ success: false, message: "Download failed" });
-        });
+                .status(404)
+                .json({ success: false, message: "File not found" });
+        }
+
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${encodeURIComponent(file.originalName)}"`
+        );
+        res.setHeader("Content-Type", "application/octet-stream");
+
+        // https.get redirect follow করে না, তাই manually handle করি
+        const makeRequest = (url: string) => {
+            https
+                .get(url, (stream) => {
+                    // Cloudinary redirect দিলে নতুন URL follow করি
+                    if (
+                        stream.statusCode &&
+                        stream.statusCode >= 300 &&
+                        stream.statusCode < 400 &&
+                        stream.headers.location
+                    ) {
+                        return makeRequest(stream.headers.location);
+                    }
+
+                    if (stream.statusCode !== 200) {
+                        return res.status(500).json({
+                            success: false,
+                            message: "Download failed",
+                        });
+                    }
+
+                    stream.pipe(res);
+                })
+                .on("error", (error) => {
+                    console.error("Download Error:", error.message);
+                    return res
+                        .status(500)
+                        .json({ success: false, message: "Download failed" });
+                });
+        };
+
+        makeRequest(file.secureUrl);
+    } catch (error: any) {
+        console.error("Download Error:", error?.message);
+        return res
+            .status(500)
+            .json({ success: false, message: "Download failed" });
+    }
+};
+const dahsboardStats = async (req: Request, res: Response) => {
+    const response = await settingsService.getDashboardStats();
+    return res.json({ success: true, data: response });
 };
 
 export const settingsController = {
     createProject,
     getAllProjects,
+    dahsboardStats,
     deleteProject,
     uploadFile,
+    visitTracker,
     getAllFiles,
     deleteFile,
     downloadFile,

@@ -8,13 +8,17 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     const result = await AuthService.loginUser(req.body);
 
     res.cookie('refreshToken', result.refreshToken, {
-        secure: config.env === 'production',
+        secure: true,
         httpOnly: true,
+        sameSite: 'none',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.cookie('accessToken', result.accessToken, {
-        secure: config.env === 'production',
+        secure: true,
         httpOnly: false,
+        sameSite: 'none',
         path: '/',
         maxAge: 7 * 24 * 60 * 60 * 1000,
     });

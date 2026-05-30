@@ -1,13 +1,16 @@
-import mongoose from "mongoose";
-
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const messageSchema = new Schema({
-    name: String,
-    email: String,
-    subject: String,
-    message: String,
-    status: { type: String, enum: ['unread', 'read', 'replied'], default: 'unread' },
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    subject: { type: String, required: true },
+    message: { type: String, required: true },
+    status: {
+        type: String,
+        enum: ['unread', 'read', 'replied'],
+        default: 'unread'
+    },
     createdAt: { type: Date, default: Date.now }
 });
 

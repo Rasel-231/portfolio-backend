@@ -29,5 +29,7 @@ router.post(
 router.get("/files", settingsController.getAllFiles);
 router.delete("/file/:id", settingsController.deleteFile);
 router.get("/download/:id", settingsController.downloadFile);
+router.post("/visit/:name", settingsController.visitTracker);
+router.get("/stats", settingsController.dahsboardStats);
 
 export const settingsRoutes = router;

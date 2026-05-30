@@ -1,20 +1,35 @@
 import { fileUploader } from "../../shared/fileUploader";
 import { IProject } from "./settingInterface";
-import { FileModel, ProjectModel } from "./settingModel";
+import { FileModel, ProjectModel, VisitModel } from "./settingModel";
 
 // --- Project Service ---
+// const createProject = async (data: IProject, file: Express.Multer.File) => {
+//     if (!file) throw new Error("Image required");
+
+//     const result = await fileUploader.uploadToCloudinary(file);
+//     if (!result) throw new Error("Cloudinary upload failed");
+
+//     return await ProjectModel.create({
+//         title: data.title,
+//         description: data.description,
+//         technology: data.technology,
+//         liveLink: data.liveLink,
+//         githubLink: data.githubLink,
+//         image: {
+//             url: result.secure_url,
+//             publicId: result.public_id,
+//         },
+//     });
+// };
 const createProject = async (data: IProject, file: Express.Multer.File) => {
     if (!file) throw new Error("Image required");
 
     const result = await fileUploader.uploadToCloudinary(file);
     if (!result) throw new Error("Cloudinary upload failed");
 
+    // ডাটাবেজে সেভ করার সময় সরাসরি spread operator ব্যবহার করা যায়
     return await ProjectModel.create({
-        title: data.title,
-        description: data.description,
-        technology: data.technology,
-        liveLink: data.liveLink,
-        githubLink: data.githubLink,
+        ...data, // এতে title, description, technology, liveLink, githubLink অটোমেটিক চলে আসবে
         image: {
             url: result.secure_url,
             publicId: result.public_id,
@@ -57,7 +72,13 @@ const getAllFiles = async () => {
 const getFile = async (id: string) => {
     return await FileModel.findById(id);
 };
-
+const incrementDownloadCount = async (id: string) => {
+    return await FileModel.findByIdAndUpdate(
+        id,
+        { $inc: { downloadCount: 1 } },
+        { new: true }
+    );
+};
 const deleteFile = async (id: string) => {
     const file = await FileModel.findById(id);
     if (!file) throw new Error("File not found");
@@ -66,6 +87,27 @@ const deleteFile = async (id: string) => {
     return await FileModel.findByIdAndDelete(id);
 };
 
+
+
+const trackVisit = async (name: string) => {
+    return await VisitModel.findOneAndUpdate(
+        { name: "portfolioVisit" },
+        { $inc: { count: 1 } },
+        { new: true, upsert: true }
+    );
+};
+const getDashboardStats = async () => {
+    const totalVisits = await VisitModel.findOne({ name: "portfolioVisit" });
+    const cvDownloads = await FileModel.aggregate([{ $group: { _id: null, total: { $sum: "$downloadCount" } } }]);
+    const totalProjects = await ProjectModel.countDocuments();
+
+    return {
+        totalVisits,
+        cvDownloads,
+        totalProjects,
+        offers: 0
+    };
+};
 export const settingsService = {
     createProject,
     getAllProjects,
@@ -73,5 +115,8 @@ export const settingsService = {
     uploadFile,
     getAllFiles,
     getFile,
+    trackVisit,
     deleteFile,
+    getDashboardStats,
+    incrementDownloadCount,
 };
