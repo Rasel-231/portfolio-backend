@@ -7,7 +7,16 @@ import router from './app/routes';
 
 const app: Application = express();
 
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+    origin: [
+        // "http://localhost:3000",
+        "https://rasel-portfolio-frontend.vercel.app"
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+}));
+
 app.use(cookieParser());
 
 // Parser configurations
