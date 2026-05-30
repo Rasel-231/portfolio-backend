@@ -10,6 +10,8 @@ export default {
     database_url: process.env.DATABASE_URL,
     bcrypt_salt_rounds: process.env.BCRYPT_SOLT_ROUND || 12,
     openrouter_api_key: process.env.OPENROUTER_API_KEY,
+    support_email: process.env.EMAIL,
+    app_password: process.env.APP_PASSWORD,
     jwt: {
         access_secret: process.env.JWT_ACCESS_SECRET,
         refresh_secret: process.env.JWT_REFRESH_SECRET,

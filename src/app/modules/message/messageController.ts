@@ -1,5 +1,6 @@
 import catchAsync from "../../shared/catchAsync";
 import sendResponse from "../../shared/sendReponse";
+import { ISupportReply } from "./messageInterface";
 import { messageService } from "./messageService";
 
 const getAllMessages = catchAsync(async (req, res) => {
@@ -45,6 +46,27 @@ const updateMessage = catchAsync(async (req, res) => {
     });
 });
 
+const supportReply = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const replyData = req.body as ISupportReply;
+
+    const result = await messageService.supportReply(id as string, replyData);
+
+    if (!result) {
+        return sendResponse(res, {
+            statusCode: 404,
+            success: false,
+            message: "Message not found to reply",
+        });
+    }
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Support reply sent successfully",
+        data: result,
+    });
+});
 const deleteMessage = catchAsync(async (req, res) => {
     const { id } = req.params;
     const deleted = await messageService.deleteMessage(id as string);
@@ -68,5 +90,6 @@ export const messageController = {
     getAllMessages,
     createMessage,
     updateMessage,
-    deleteMessage
+    deleteMessage,
+    supportReply
 };

@@ -75,7 +75,6 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
 
 const profile = catchAsync(async (req: Request, res: Response) => {
     const user = req.user!;
-    console.log("user", user)
     sendResponse(res, {
         statusCode: 200,
         success: true,
