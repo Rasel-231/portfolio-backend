@@ -10,7 +10,7 @@ const openai = new OpenAI({
 
 export const chatWithAi = async (prompt: string, isFirstMessage: boolean = false) => {
     try {
-        const searchRegex = new RegExp(prompt.split(' ').join('|'), 'i');
+        const searchRegex = new RegExp(prompt.split(' ').map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'i');
         const contextDocs = await PortfolioData.find({
             content: { $regex: searchRegex }
         }).limit(5);
@@ -37,7 +37,7 @@ export const chatWithAi = async (prompt: string, isFirstMessage: boolean = false
         `;
 
         const response = await openai.chat.completions.create({
-            model: "meta-llama/llama-3-8b-instruct",
+            model: "openai/gpt-4o-mini",
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: prompt }
@@ -57,7 +57,10 @@ export const chatWithAi = async (prompt: string, isFirstMessage: boolean = false
         return {
             success: false,
             message: "AI failed to respond",
-            data: { reply: "দুঃখিত, সার্ভারে কারিগরি সমস্যা হচ্ছে।" }
+            data: {
+                reply: "দুঃখিত, সার্ভারে কারিগরি সমস্যা হচ্ছে।",
+                error: error instanceof Error ? error.message : "Unknown error",
+            }
         };
     }
 };
